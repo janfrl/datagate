@@ -87,6 +87,9 @@ export type WorkflowRunResult = {
   findings: Finding[]
   summary: WorkflowRunSummary
   qualityScore: QualityScore
+  artifacts?: {
+    report?: string
+  }
 }
 
 export type Artifact = {

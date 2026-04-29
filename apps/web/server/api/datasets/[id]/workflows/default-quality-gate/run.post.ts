@@ -1,6 +1,6 @@
-import { runWorkflow } from '../../../../../services/workflows/runWorkflow'
+import { runDefaultQualityGateWorkflow } from '../../../../../services/workflows/runDefaultQualityGate'
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
 
   if (!id) {
@@ -10,5 +10,5 @@ export default defineEventHandler((event) => {
     })
   }
 
-  return runWorkflow('default-quality-gate', id)
+  return runDefaultQualityGateWorkflow(id)
 })
