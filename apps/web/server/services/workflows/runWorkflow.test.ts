@@ -119,6 +119,40 @@ describe('workflow runner', () => {
       lowFindings: 1,
       infoFindings: 1
     })
+    expect(result.qualityScore).toEqual({
+      score: 75,
+      maxScore: 100,
+      breakdown: [
+        {
+          category: 'schema',
+          score: 0,
+          maxScore: 25,
+          impact: 25,
+          findingCount: 5
+        },
+        {
+          category: 'completeness',
+          score: 25,
+          maxScore: 25,
+          impact: 0,
+          findingCount: 0
+        },
+        {
+          category: 'privacy',
+          score: 25,
+          maxScore: 25,
+          impact: 0,
+          findingCount: 0
+        },
+        {
+          category: 'outliers',
+          score: 25,
+          maxScore: 25,
+          impact: 0,
+          findingCount: 0
+        }
+      ]
+    })
   })
 
   it('returns zero counts when no findings exist', () => {

@@ -62,6 +62,20 @@ export type WorkflowRunSummary = {
   infoFindings: number
 }
 
+export type QualityScoreBreakdownItem = {
+  category: Finding['category']
+  score: number
+  maxScore: number
+  impact: number
+  findingCount: number
+}
+
+export type QualityScore = {
+  score: number
+  maxScore: number
+  breakdown: QualityScoreBreakdownItem[]
+}
+
 export type WorkflowRunResult = {
   id: string
   workflowId: string
@@ -72,6 +86,7 @@ export type WorkflowRunResult = {
   taskResults: ToolResult[]
   findings: Finding[]
   summary: WorkflowRunSummary
+  qualityScore: QualityScore
 }
 
 export type Artifact = {

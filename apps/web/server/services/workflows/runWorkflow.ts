@@ -1,4 +1,5 @@
 import type { Finding, ToolResult, Workflow, WorkflowRunResult, WorkflowRunSummary } from '@datagate/shared'
+import { calculateQualityScore } from '../scoring/qualityScore'
 import { getWorkflow } from './workflows'
 
 type DatasetTaskPayload = {
@@ -79,7 +80,8 @@ export function createWorkflowRunResult(input: {
     completedAt: input.completedAt,
     taskResults: input.taskResults,
     findings,
-    summary: summarizeFindings(findings)
+    summary: summarizeFindings(findings),
+    qualityScore: calculateQualityScore(findings)
   }
 }
 
