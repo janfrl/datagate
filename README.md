@@ -37,6 +37,10 @@ packages/shared  shared TypeScript contracts and schemas
 
 The Nuxt app owns UI, chat rendering, artifact previews, API routes, Nitro Tasks, and local storage for the MVP.
 
+## Template Review Notes
+
+The Nuxt UI Chat template foundation keeps its existing auth, chat persistence, LLM provider config, database assumptions, and deployment assumptions for now. Review these areas before implementing Data Gate dataset workflows.
+
 ## Privacy Rules
 
 - Uploaded datasets stay on the server.
