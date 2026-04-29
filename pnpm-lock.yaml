@@ -31,6 +31,9 @@ importers:
       '@datagate/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@datagate/tools':
+        specifier: workspace:*
+        version: link:../../packages/tools
       '@iconify-json/logos':
         specifier: ^1.2.11
         version: 1.2.11
@@ -115,6 +118,12 @@ importers:
         version: 3.2.7(typescript@6.0.3)
 
   packages/shared: {}
+
+  packages/tools:
+    dependencies:
+      '@datagate/shared':
+        specifier: workspace:*
+        version: link:../shared
 
 packages:
 

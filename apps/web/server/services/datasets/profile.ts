@@ -32,6 +32,24 @@ export async function getDatasetProfile(datasetId: string): Promise<DatasetProfi
   return profile
 }
 
+export async function getDatasetRows(datasetId: string): Promise<Record<string, unknown>[]> {
+  validateDatasetId(datasetId)
+
+  const dataset = await getDataset(datasetId)
+  const parsedRows = parseCsv(await readFile(dataset.storagePath, 'utf8'))
+
+  if (parsedRows.length === 0) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'CSV file does not contain a header row'
+    })
+  }
+
+  const headers = normalizeHeaders(parsedRows[0]!)
+
+  return parsedRows.slice(1).map(row => rowToRecord(headers, row))
+}
+
 function profileCsv(datasetId: string, csv: string): DatasetProfile {
   const parsedRows = parseCsv(csv)
 

@@ -33,6 +33,7 @@ Data Gate is built as a pnpm monorepo.
 ```txt
 apps/web          Nuxt app, Nitro backend, chat UI, local server logic
 packages/shared  shared TypeScript contracts and schemas
+packages/tools   framework-independent deterministic analysis tools
 ```
 
 The Nuxt app owns UI, chat rendering, artifact previews, API routes, Nitro Tasks, and local storage for the MVP.
