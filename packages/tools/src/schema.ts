@@ -1,25 +1,18 @@
 import type { DatasetProfile, Finding, ToolResult } from '@datagate/shared'
 import { createFinding, schemaToolId, scoreImpact, uniqueRatio, normalizeName } from './utils'
 
-const generatedColumnName = /^column_\d+$/i
 const identifierName = /(^|_)(id|uuid|guid|token|key)($|_)/
 const highCardinalityRatio = 0.9
 const highCardinalityMinimumRows = 10
 
 export function analyzeSchema(profile: DatasetProfile): ToolResult {
   const findings: Finding[] = []
-  const seenColumnNames = new Map<string, number>()
-
-  for (const column of profile.columns) {
-    const normalized = normalizeName(column.name)
-    seenColumnNames.set(normalized, (seenColumnNames.get(normalized) ?? 0) + 1)
-  }
 
   for (const column of profile.columns) {
     const normalized = normalizeName(column.name)
     const columnUniqueRatio = uniqueRatio(column.uniqueCount, profile.rowCount)
 
-    if (column.name.trim().length === 0 || generatedColumnName.test(column.name)) {
+    if (column.wasGeneratedName === true || column.originalName === '') {
       findings.push(createFinding({
         toolId: schemaToolId,
         category: 'schema',
@@ -29,22 +22,22 @@ export function analyzeSchema(profile: DatasetProfile): ToolResult {
         message: `Column "${column.name}" appears to come from an empty CSV header.`,
         recommendation: 'Rename the column to a clear, domain-specific field name.',
         evidence: {
-          detection: column.name.trim().length === 0 ? 'empty-column-name' : 'generated-column-name'
+          detection: column.wasGeneratedName === true ? 'generated-column-name' : 'empty-original-column-name'
         }
       }))
     }
 
-    if ((seenColumnNames.get(normalized) ?? 0) > 1) {
+    if (column.wasDuplicateName === true) {
       findings.push(createFinding({
         toolId: schemaToolId,
         category: 'schema',
         severity: 'high',
         column: column.name,
-        title: 'Duplicate column name detected',
-        message: `Column "${column.name}" has the same normalized name as another column.`,
+        title: 'Duplicate original column name detected',
+        message: `Column "${column.name}" came from a duplicate CSV header.`,
         recommendation: 'Rename duplicate columns so each field has a unique meaning.',
         evidence: {
-          detection: 'duplicate-normalized-column-name'
+          detection: 'duplicate-original-column-name'
         }
       }))
     }

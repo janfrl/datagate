@@ -5,6 +5,7 @@ import { getDataset, profilesDir } from './storage'
 
 type CsvRow = string[]
 type InferredType = ColumnProfile['inferredType']
+type NormalizedHeader = Pick<ColumnProfile, 'name' | 'originalName' | 'wasGeneratedName' | 'wasDuplicateName'>
 
 const sampleRowLimit = 20
 const exampleLimit = 5
@@ -16,7 +17,11 @@ export async function getDatasetProfile(datasetId: string): Promise<DatasetProfi
 
   try {
     const content = await readFile(profilePath, 'utf8')
-    return JSON.parse(content) as DatasetProfile
+    const profile = JSON.parse(content) as DatasetProfile
+
+    if (profileHasHeaderMetadata(profile)) {
+      return profile
+    }
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
       throw error
@@ -47,7 +52,7 @@ export async function getDatasetRows(datasetId: string): Promise<Record<string, 
 
   const headers = normalizeHeaders(parsedRows[0]!)
 
-  return parsedRows.slice(1).map(row => rowToRecord(headers, row))
+  return parsedRows.slice(1).map(row => rowToRecord(headers.map(header => header.name), row))
 }
 
 function profileCsv(datasetId: string, csv: string): DatasetProfile {
@@ -62,8 +67,9 @@ function profileCsv(datasetId: string, csv: string): DatasetProfile {
 
   const headers = normalizeHeaders(parsedRows[0]!)
   const rows = parsedRows.slice(1)
-  const sampleRows = rows.slice(0, sampleRowLimit).map(row => rowToRecord(headers, row))
-  const columns = headers.map((name, index) => profileColumn(name, rows, index))
+  const headerNames = headers.map(header => header.name)
+  const sampleRows = rows.slice(0, sampleRowLimit).map(row => rowToRecord(headerNames, row))
+  const columns = headers.map((header, index) => profileColumn(header, rows, index))
 
   return {
     datasetId,
@@ -74,7 +80,7 @@ function profileCsv(datasetId: string, csv: string): DatasetProfile {
   }
 }
 
-function profileColumn(name: string, rows: CsvRow[], index: number): ColumnProfile {
+function profileColumn(header: NormalizedHeader, rows: CsvRow[], index: number): ColumnProfile {
   const values = rows.map(row => row[index] ?? '')
   const presentValues = values.map(value => value.trim()).filter(value => value.length > 0)
   const inferredType = inferColumnType(presentValues)
@@ -82,7 +88,10 @@ function profileColumn(name: string, rows: CsvRow[], index: number): ColumnProfi
   const uniqueValues = new Set(presentValues)
 
   return {
-    name,
+    name: header.name,
+    originalName: header.originalName,
+    wasGeneratedName: header.wasGeneratedName,
+    wasDuplicateName: header.wasDuplicateName,
     inferredType,
     missingCount,
     missingRatio: values.length === 0 ? 0 : missingCount / values.length,
@@ -95,17 +104,44 @@ function rowToRecord(headers: string[], row: CsvRow): Record<string, unknown> {
   return Object.fromEntries(headers.map((header, index) => [header, row[index] ?? '']))
 }
 
-function normalizeHeaders(headers: CsvRow): string[] {
-  const seen = new Map<string, number>()
+function normalizeHeaders(headers: CsvRow): NormalizedHeader[] {
+  const seenOriginalNames = new Map<string, number>()
+  const safeNameCounts = new Map<string, number>()
+  const usedSafeNames = new Set<string>()
 
   return headers.map((header, index) => {
+    const originalName = header.trim()
     const fallback = `column_${index + 1}`
-    const baseName = header.trim() || fallback
-    const seenCount = seen.get(baseName) ?? 0
-    seen.set(baseName, seenCount + 1)
+    const baseSafeName = originalName || fallback
+    const originalSeenCount = seenOriginalNames.get(originalName) ?? 0
+    const safeSeenCount = safeNameCounts.get(baseSafeName) ?? 0
+    let safeName = safeSeenCount === 0 ? baseSafeName : `${baseSafeName}_${safeSeenCount + 1}`
 
-    return seenCount === 0 ? baseName : `${baseName}_${seenCount + 1}`
+    while (usedSafeNames.has(safeName)) {
+      const nextCount = (safeNameCounts.get(baseSafeName) ?? 0) + 1
+      safeNameCounts.set(baseSafeName, nextCount)
+      safeName = `${baseSafeName}_${nextCount + 1}`
+    }
+
+    seenOriginalNames.set(originalName, originalSeenCount + 1)
+    safeNameCounts.set(baseSafeName, (safeNameCounts.get(baseSafeName) ?? 0) + 1)
+    usedSafeNames.add(safeName)
+
+    return {
+      name: safeName,
+      originalName,
+      wasGeneratedName: originalName.length === 0,
+      wasDuplicateName: originalSeenCount > 0
+    }
   })
+}
+
+function profileHasHeaderMetadata(profile: DatasetProfile) {
+  return profile.columns.every(column => (
+    typeof column.originalName === 'string'
+    && typeof column.wasGeneratedName === 'boolean'
+    && typeof column.wasDuplicateName === 'boolean'
+  ))
 }
 
 function inferColumnType(values: string[]): InferredType {

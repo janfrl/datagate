@@ -17,6 +17,9 @@ export type DatasetProfile = {
 
 export type ColumnProfile = {
   name: string
+  originalName?: string
+  wasGeneratedName?: boolean
+  wasDuplicateName?: boolean
   inferredType: 'string' | 'number' | 'boolean' | 'date' | 'unknown'
   missingCount: number
   missingRatio: number
