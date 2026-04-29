@@ -55,7 +55,7 @@ export async function getDatasetRows(datasetId: string): Promise<Record<string, 
   return parsedRows.slice(1).map(row => rowToRecord(headers.map(header => header.name), row))
 }
 
-function profileCsv(datasetId: string, csv: string): DatasetProfile {
+export function profileCsv(datasetId: string, csv: string): DatasetProfile {
   const parsedRows = parseCsv(csv)
 
   if (parsedRows.length === 0) {
