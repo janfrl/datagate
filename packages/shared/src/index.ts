@@ -51,6 +51,29 @@ export type Workflow = {
   taskIds: string[]
 }
 
+export type WorkflowRunStatus = 'completed' | 'failed'
+
+export type WorkflowRunSummary = {
+  totalFindings: number
+  criticalFindings: number
+  highFindings: number
+  mediumFindings: number
+  lowFindings: number
+  infoFindings: number
+}
+
+export type WorkflowRunResult = {
+  id: string
+  workflowId: string
+  datasetId: string
+  status: WorkflowRunStatus
+  startedAt: string
+  completedAt: string
+  taskResults: ToolResult[]
+  findings: Finding[]
+  summary: WorkflowRunSummary
+}
+
 export type Artifact = {
   id: string
   type: 'dataset-profile' | 'findings' | 'report'
