@@ -8,9 +8,10 @@ type UploadedDatasetFile = {
   data: Buffer
 }
 
-const dataRoot = join(process.cwd(), '.data', 'datagate')
-const uploadsDir = join(dataRoot, 'uploads')
-const datasetsDir = join(dataRoot, 'datasets')
+export const dataRoot = join(process.cwd(), '.data', 'datagate')
+export const uploadsDir = join(dataRoot, 'uploads')
+export const datasetsDir = join(dataRoot, 'datasets')
+export const profilesDir = join(dataRoot, 'profiles')
 
 const csvMimeTypes = new Set([
   'text/csv',
@@ -62,9 +63,29 @@ export async function listDatasets(): Promise<Dataset[]> {
   return datasets.sort((a, b) => b.uploadedAt.localeCompare(a.uploadedAt))
 }
 
-async function ensureDatasetDirectories() {
+export async function getDataset(id: string): Promise<Dataset> {
+  validateDatasetId(id)
+  await ensureDatasetDirectories()
+
+  try {
+    const content = await readFile(join(datasetsDir, `${id}.json`), 'utf8')
+    return JSON.parse(content) as Dataset
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      throw createError({
+        statusCode: 404,
+        statusMessage: 'Dataset not found'
+      })
+    }
+
+    throw error
+  }
+}
+
+export async function ensureDatasetDirectories() {
   await mkdir(uploadsDir, { recursive: true })
   await mkdir(datasetsDir, { recursive: true })
+  await mkdir(profilesDir, { recursive: true })
 }
 
 function validateUploadedCsv(file?: UploadedDatasetFile): asserts file is UploadedDatasetFile & { filename: string } {
@@ -103,4 +124,13 @@ function isCsvFile(file: UploadedDatasetFile) {
   const hasCsvExtension = file.filename?.toLowerCase().endsWith('.csv') ?? false
 
   return hasCsvMimeType || hasCsvExtension
+}
+
+function validateDatasetId(id: string) {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Invalid dataset id'
+    })
+  }
 }
