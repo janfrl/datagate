@@ -1,18 +1,25 @@
 import type { UIMessage } from 'ai'
 import { db, schema } from 'hub:db'
 import { z } from 'zod'
+import { getDataset } from '../services/datasets/storage'
 
 export default defineEventHandler(async (event) => {
   const session = await getUserSession(event)
-  const { id, message } = await readValidatedBody(event, z.object({
+  const { activeDatasetId, id, message } = await readValidatedBody(event, z.object({
     id: z.string(),
+    activeDatasetId: z.string().uuid().optional(),
     message: z.custom<UIMessage>()
   }).parse)
+
+  if (activeDatasetId) {
+    await getDataset(activeDatasetId)
+  }
 
   const [chat] = await db.insert(schema.chats).values({
     id,
     title: '',
-    userId: session.user?.id || session.id
+    userId: session.user?.id || session.id,
+    activeDatasetId
   }).returning()
 
   if (!chat) {

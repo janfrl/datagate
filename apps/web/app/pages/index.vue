@@ -25,6 +25,7 @@ async function createChat(prompt: string) {
       method: 'POST',
       headers: { [headerName]: csrf },
       body: {
+        activeDatasetId: latestUploadedDataset.value?.id,
         id: chatId,
         message: {
           id: crypto.randomUUID(),
@@ -127,34 +128,18 @@ const quickChats = [
             Local-first AI data quality checker
           </p>
 
-          <div>
-            <input
-              ref="datasetFileInput"
-              type="file"
-              accept=".csv,text/csv"
-              class="hidden"
-              @change="onDatasetFileChange"
-            >
-
-            <UButton
-              type="button"
-              icon="i-lucide-upload"
-              label="Upload dataset"
+          <div
+            v-if="latestUploadedDataset"
+            class="flex"
+          >
+            <UBadge
               color="neutral"
-              variant="outline"
-              :loading="datasetUploading"
-              @click="openDatasetFilePicker"
+              variant="soft"
+              icon="i-lucide-paperclip"
+              :label="`Attached ${latestUploadedDataset.filename}`"
+              class="max-w-full"
             />
           </div>
-
-          <UAlert
-            v-if="latestUploadedDataset"
-            color="success"
-            variant="soft"
-            icon="i-lucide-check"
-            :title="`Dataset uploaded: ${latestUploadedDataset.filename}`"
-            description="Ask the chat to analyze it, or use the Analyze my latest dataset suggestion."
-          />
 
           <UAlert
             v-else-if="datasetUploadError"
@@ -174,6 +159,13 @@ const quickChats = [
           >
             <template #footer>
               <div class="flex items-center gap-1">
+                <input
+                  ref="datasetFileInput"
+                  type="file"
+                  accept=".csv,text/csv"
+                  class="hidden"
+                  @change="onDatasetFileChange"
+                >
                 <ChatFileUploadButton
                   :open="openDatasetFilePicker"
                   :loading="datasetUploading"

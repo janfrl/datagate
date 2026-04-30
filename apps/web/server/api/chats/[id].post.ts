@@ -7,7 +7,9 @@ import type { AnthropicLanguageModelOptions } from '@ai-sdk/anthropic'
 import type { GoogleLanguageModelOptions } from '@ai-sdk/google'
 import type { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai'
 import { getChatModelConfig } from '../../services/ai/chatProvider'
-import { dataGateTools } from '../../utils/dataGateTools'
+import { toPublicDataset } from '../../services/datasets/datasetResponses'
+import { getDataset } from '../../services/datasets/storage'
+import { createDataGateTools } from '../../utils/dataGateTools'
 
 defineRouteMeta({
   openAPI: {
@@ -41,6 +43,9 @@ export default defineEventHandler(async (event) => {
   if (!chat) {
     throw createError({ statusCode: 404, statusMessage: 'Chat not found' })
   }
+  const activeDataset = chat.activeDatasetId
+    ? toPublicDataset(await getDataset(chat.activeDatasetId))
+    : null
   const chatModel = getChatModelConfig({ provider, model })
 
   if (!chat.title) {
@@ -80,8 +85,10 @@ export default defineEventHandler(async (event) => {
 
 **DATA GATE WORKFLOW RULES:**
 - Prefer deterministic Data Gate tools over guessing about uploaded datasets, reports, or quality status
-- Use listDatasets to inspect available datasets when the user asks about uploaded data or does not provide a dataset id
-- If the user asks to analyze a dataset and no dataset is specified, list datasets and choose the most recent only when that is clearly reasonable from the request, such as "latest dataset"; otherwise ask one short clarification
+- Current active chat dataset metadata: ${activeDataset ? JSON.stringify(activeDataset) : 'none'}
+- If the current chat has an active dataset and the user asks to analyze "this", "my dataset", or the uploaded file, call runDefaultQualityGate without asking which dataset to use
+- Use listDatasets to inspect available datasets only when the current chat has no active dataset, or when the user explicitly asks about the dataset library
+- If the user asks to analyze a dataset and no dataset is attached or specified, ask them to upload/select one or list datasets when that is helpful
 - Use runDefaultQualityGate to analyze a dataset; do not call or request arbitrary Nitro Tasks
 - Use getArtifact only for report artifacts returned by the workflow or explicitly referenced by the user
 - Never claim a dataset is ready for AI use unless you have run or referenced a workflow result
@@ -106,7 +113,7 @@ export default defineEventHandler(async (event) => {
 - Maintain a friendly, professional tone`,
         messages: await convertToModelMessages(messages),
         tools: {
-          ...dataGateTools
+          ...createDataGateTools({ activeDataset })
         },
         providerOptions: {
           anthropic: {

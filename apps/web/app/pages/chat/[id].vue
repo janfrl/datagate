@@ -17,9 +17,14 @@ const { data } = await useFetch(`/api/chats/${route.params.id}`, {
 const isOwner = computed(() => data.value?.isOwner ?? false)
 const visibility = ref<'public' | 'private'>(data.value?.visibility ?? 'private')
 const title = ref<string | null>(data.value?.title ?? null)
+const activeDataset = ref<PublicDataset | null>(data.value?.activeDataset ?? null)
 
 watch(() => data.value?.title, (next) => {
   title.value = next ?? null
+})
+
+watch(() => data.value?.activeDataset, (next) => {
+  activeDataset.value = next ?? null
 })
 
 const { data: votes } = await useLazyFetch(`/api/chats/${route.params.id}/votes`, {
@@ -28,7 +33,6 @@ const { data: votes } = await useLazyFetch(`/api/chats/${route.params.id}/votes`
 
 const input = ref('')
 const datasetFileInput = ref<HTMLInputElement>()
-const latestUploadedDataset = ref<PublicDataset>()
 const { uploading: datasetUploading, error: datasetUploadError, uploadDatasetFile } = useDatasetUpload()
 
 const chat = new Chat({
@@ -94,11 +98,10 @@ async function onDatasetFileChange(event: Event) {
   if (!file) return
 
   try {
-    latestUploadedDataset.value = undefined
-    const dataset = await uploadDatasetFile(file)
-    latestUploadedDataset.value = dataset
+    const dataset = await uploadDatasetFile(file, { chatId: data.value!.id })
+    activeDataset.value = dataset
     toast.add({
-      title: 'Dataset uploaded',
+      title: 'File attached',
       description: dataset.filename,
       color: 'success',
       icon: 'i-lucide-check'
@@ -274,17 +277,7 @@ onMounted(() => {
           </UChatMessages>
 
           <UAlert
-            v-if="latestUploadedDataset"
-            color="success"
-            variant="soft"
-            icon="i-lucide-check"
-            class="sticky bottom-20 z-10"
-            :title="`Dataset uploaded: ${latestUploadedDataset.filename}`"
-            description="Ask the chat to analyze it when you are ready."
-          />
-
-          <UAlert
-            v-else-if="datasetUploadError"
+            v-if="datasetUploadError"
             color="error"
             variant="soft"
             icon="i-lucide-circle-alert"
@@ -302,7 +295,7 @@ onMounted(() => {
             @submit="handleSubmit"
           >
             <template #footer>
-              <div class="flex items-center gap-1">
+              <div class="flex min-w-0 flex-1 items-center gap-1">
                 <input
                   ref="datasetFileInput"
                   type="file"
@@ -316,6 +309,14 @@ onMounted(() => {
                   :disabled="chat.status === 'streaming'"
                 />
                 <ModelSelect />
+                <UBadge
+                  v-if="activeDataset"
+                  color="neutral"
+                  variant="soft"
+                  icon="i-lucide-paperclip"
+                  :label="`Attached ${activeDataset.filename}`"
+                  class="ml-1 max-w-[min(20rem,45vw)] truncate"
+                />
               </div>
 
               <UChatPromptSubmit

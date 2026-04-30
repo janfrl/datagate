@@ -11,7 +11,7 @@ export function useDatasetUpload() {
   const uploading = ref(false)
   const error = ref<string>()
 
-  async function uploadDatasetFile(file?: File): Promise<PublicDataset> {
+  async function uploadDatasetFile(file?: File, options: { chatId?: string } = {}): Promise<PublicDataset> {
     error.value = undefined
 
     if (!file) {
@@ -36,7 +36,18 @@ export function useDatasetUpload() {
         body: formData
       })
 
+      if (options.chatId) {
+        await $fetch(`/api/chats/${options.chatId}/dataset`, {
+          method: 'PUT',
+          headers: { [headerName]: csrf },
+          body: { datasetId: dataset.id }
+        })
+      }
+
       await refreshNuxtData('datasets')
+      if (options.chatId) {
+        await refreshNuxtData(`chat-${options.chatId}`)
+      }
       return dataset
     } catch (uploadError) {
       error.value = getDatasetUploadError(uploadError)

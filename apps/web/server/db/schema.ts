@@ -27,6 +27,7 @@ export const chats = sqliteTable('chats', {
   title: text('title'),
   userId: text('user_id').notNull(),
   visibility: text('visibility', { enum: ['public', 'private'] }).notNull().default('private'),
+  activeDatasetId: text('active_dataset_id'),
   ...timestamps
 }, table => [
   index('chats_user_id_idx').on(table.userId)

@@ -14,7 +14,7 @@ withDefaults(defineProps<{
     :content="{
       side: 'top'
     }"
-    text="Upload CSV dataset"
+    text="Attach file"
   >
     <UButton
       icon="i-lucide-paperclip"
@@ -23,7 +23,7 @@ withDefaults(defineProps<{
       size="sm"
       :disabled="disabled"
       :loading="loading"
-      aria-label="Upload CSV dataset"
+      aria-label="Attach file"
       @click="open()"
     />
   </UTooltip>

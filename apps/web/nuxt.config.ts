@@ -22,12 +22,6 @@ export default defineNuxtConfig({
     }
   },
 
-  experimental: {
-    viewTransition: true
-  },
-
-  compatibilityDate: 'latest',
-
   runtimeConfig: {
     aiProvider: process.env.AI_PROVIDER || '',
     aiModel: process.env.AI_MODEL || '',
@@ -40,6 +34,12 @@ export default defineNuxtConfig({
       hasGatewayAiProvider: !!process.env.AI_GATEWAY_API_KEY
     }
   },
+
+  experimental: {
+    viewTransition: true
+  },
+
+  compatibilityDate: 'latest',
 
   nitro: {
     experimental: {

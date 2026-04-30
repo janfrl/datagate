@@ -40,7 +40,7 @@ The Nuxt app owns UI, chat rendering, artifact previews, API routes, Nitro Tasks
 
 ## Local Data Flow
 
-- Upload CSV datasets from the Datasets page.
+- Upload CSV datasets from the chat composer; uploaded datasets are attached to the active chat and also stored in the Datasets library for reuse.
 - Uploaded CSV files are written under the local app data directory, not external object storage.
 - Deterministic profiling and quality checks run on the server through the Default Quality Gate workflow.
 - Chat can call high-level Data Gate tools to list dataset metadata, run the Default Quality Gate, and read generated report artifacts.
@@ -100,7 +100,7 @@ Start the app:
 pnpm dev
 ```
 
-Open the local Nuxt URL, upload a CSV from the Datasets page, run the Default Quality Gate, then ask chat to summarize the latest dataset or report.
+Open the local Nuxt URL, attach a CSV from the chat composer, then ask chat to analyze it with the Default Quality Gate or summarize the generated report.
 
 ## Demo Data
 
