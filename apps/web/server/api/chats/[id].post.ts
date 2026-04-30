@@ -9,6 +9,7 @@ import type { GoogleLanguageModelOptions } from '@ai-sdk/google'
 // import { google } from '@ai-sdk/google'
 import type { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai'
 import { openai } from '@ai-sdk/openai'
+import { dataGateTools } from '../../utils/dataGateTools'
 
 defineRouteMeta({
   openAPI: {
@@ -77,7 +78,18 @@ export default defineEventHandler(async (event) => {
       const result = streamText({
         abortSignal: abortController.signal,
         model,
-        system: `You are a knowledgeable and helpful AI assistant. ${session.user?.username ? `The user's name is ${session.user.username}.` : ''} Your goal is to provide clear, accurate, and well-structured responses.
+        system: `You are a knowledgeable and helpful AI assistant for Data Gate, a local-first data quality checker. ${session.user?.username ? `The user's name is ${session.user.username}.` : ''} Your goal is to provide clear, accurate, and well-structured responses.
+
+**DATA GATE WORKFLOW RULES:**
+- Prefer deterministic Data Gate tools over guessing about uploaded datasets, reports, or quality status
+- Use listDatasets to inspect available datasets when the user asks about uploaded data or does not provide a dataset id
+- If the user asks to analyze a dataset and no dataset is specified, list datasets and choose the most recent only when that is clearly reasonable from the request, such as "latest dataset"; otherwise ask one short clarification
+- Use runDefaultQualityGate to analyze a dataset; do not call or request arbitrary Nitro Tasks
+- Use getArtifact only for report artifacts returned by the workflow or explicitly referenced by the user
+- Never claim a dataset is ready for AI use unless you have run or referenced a workflow result
+- Never request, reveal, or summarize raw dataset rows in chat
+- Treat privacy findings as blockers, especially critical or high severity privacy findings
+- After running the workflow, summarize the quality score, critical/high issues, top recommended next actions, and the report artifact id or link
 
 **FORMATTING RULES (CRITICAL):**
 - ABSOLUTELY NO MARKDOWN HEADINGS: Never use #, ##, ###, ####, #####, or ######
@@ -101,6 +113,7 @@ export default defineEventHandler(async (event) => {
 - Maintain a friendly, professional tone`,
         messages: await convertToModelMessages(messages),
         tools: {
+          ...dataGateTools,
           chart: chartTool,
           weather: weatherTool,
           ...(model.startsWith('anthropic/') && { web_search: anthropic.tools.webSearch_20250305() }),
