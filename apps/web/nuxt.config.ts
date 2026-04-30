@@ -1,3 +1,7 @@
+import { fileURLToPath } from 'node:url'
+
+const taskHandler = (path: string) => fileURLToPath(new URL(path, import.meta.url))
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: [
@@ -43,7 +47,26 @@ export default defineNuxtConfig({
 
   nitro: {
     experimental: {
-      openAPI: true
+      openAPI: true,
+      tasks: true
+    },
+    tasks: {
+      'datagate:profile:schema': {
+        handler: taskHandler('./server/tasks/datagate.profile.schema.ts'),
+        description: 'Detects schema issues in a dataset profile.'
+      },
+      'datagate:profile:completeness': {
+        handler: taskHandler('./server/tasks/datagate.profile.completeness.ts'),
+        description: 'Detects missing-value issues in a dataset profile.'
+      },
+      'datagate:profile:pii': {
+        handler: taskHandler('./server/tasks/datagate.profile.pii.ts'),
+        description: 'Detects deterministic PII signals in a dataset profile.'
+      },
+      'datagate:profile:outliers': {
+        handler: taskHandler('./server/tasks/datagate.profile.outliers.ts'),
+        description: 'Detects numeric outliers using IQR bounds.'
+      }
     }
   },
 
