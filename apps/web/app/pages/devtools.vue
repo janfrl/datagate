@@ -1,30 +1,60 @@
 <script setup lang="ts">
 const route = useRoute()
+const router = useRouter()
+
+type DevtoolsOverviewResponse = {
+  enabled: boolean
+  environment: string
+  counts: {
+    tools: number
+    workflows: number
+    expectedNitroTasks: number
+    datasets: number
+    artifacts: number
+  }
+  health: {
+    aiProvider: { configured: boolean, provider: string | null }
+    githubOAuth: { configured: boolean }
+  }
+  recent: {
+    datasets: Array<{ id: string, filename: string, uploadedAt: string, size: number, mimeType: string }>
+    artifacts: Array<{ id: string, type: string, title: string, datasetId?: string, createdAt: string, updatedAt: string }>
+    latestReportArtifact: { id: string, type: string, title: string, createdAt: string, updatedAt: string } | null
+    latestDataset: { id: string, filename: string, uploadedAt: string, size: number, mimeType: string } | null
+  }
+}
 
 const {
   data: overview,
   pending,
   error,
   refresh
-} = await useFetch('/api/devtools/overview')
+} = await useFetch<DevtoolsOverviewResponse>('/api/devtools/overview')
 
-const activeTab = ref('overview')
 const tabs = [
-  { label: 'Overview', value: 'overview', icon: 'i-lucide-layout-dashboard', description: 'Runtime summary and guardrails' },
-  { label: 'Chat Context', value: 'chat', icon: 'i-lucide-message-square-text', description: 'Sanitized agent context' },
-  { label: 'Tools', value: 'tools', icon: 'i-lucide-wrench', description: 'AI tools and task contracts' },
-  { label: 'Workflows', value: 'workflows', icon: 'i-lucide-git-branch', description: 'Built-in flow execution' },
-  { label: 'Datasets', value: 'datasets', icon: 'i-lucide-table', description: 'Uploaded dataset metadata' },
-  { label: 'Artifacts', value: 'artifacts', icon: 'i-lucide-file-text', description: 'Report artifact lookup' },
-  { label: 'Diagnostics', value: 'diagnostics', icon: 'i-lucide-activity', description: 'Config and task probes' }
+  { label: 'Overview', value: 'overview', icon: 'i-lucide-layout-dashboard', description: 'Health, recent activity, quick actions' },
+  { label: 'Datasets', value: 'datasets', icon: 'i-lucide-database', description: 'Search, inspect, run workflows' },
+  { label: 'Workflows', value: 'workflows', icon: 'i-lucide-git-branch', description: 'Run the Default Quality Gate' },
+  { label: 'Tools', value: 'tools', icon: 'i-lucide-wrench', description: 'AI tools and Nitro task probes' },
+  { label: 'Artifacts', value: 'artifacts', icon: 'i-lucide-file-text', description: 'Recent reports and lookups' },
+  { label: 'Diagnostics', value: 'diagnostics', icon: 'i-lucide-activity', description: 'Environment and probes' },
+  { label: 'Trace', value: 'trace', icon: 'i-lucide-route', description: 'Chat tool-call trace' },
+  { label: 'Chat Context', value: 'chat', icon: 'i-lucide-message-square-text', description: 'Sanitized context (raw)' }
 ]
 
-const activeItem = computed(() => tabs.find(tab => tab.value === activeTab.value) ?? {
-  label: 'Overview',
-  value: 'overview',
-  icon: 'i-lucide-layout-dashboard',
-  description: 'Runtime summary and guardrails'
-})
+const initialTab = typeof route.query.tab === 'string' ? route.query.tab : 'overview'
+const activeTab = ref(tabs.some(tab => tab.value === initialTab) ? initialTab : 'overview')
+
+const initialDatasetId = computed(() => typeof route.query.datasetId === 'string' ? route.query.datasetId : '')
+const initialArtifactId = computed(() => typeof route.query.artifactId === 'string' ? route.query.artifactId : '')
+const initialChatId = computed(() => typeof route.query.chatId === 'string' ? route.query.chatId : '')
+
+const activeItem = computed(() => tabs.find(tab => tab.value === activeTab.value) ?? tabs[0]!)
+
+function navigateTab(tab: string, query: Record<string, string> = {}) {
+  activeTab.value = tab
+  router.replace({ query: { ...route.query, ...query, tab } })
+}
 </script>
 
 <template>
@@ -40,7 +70,7 @@ const activeItem = computed(() => tabs.find(tab => tab.value === activeTab.value
               Data Gate DevTools
             </h1>
             <p class="text-sm text-muted">
-              Internal development observability for tools, workflows, datasets, and artifacts.
+              Internal observability for tools, workflows, datasets, and artifacts.
             </p>
           </div>
         </template>
@@ -66,7 +96,7 @@ const activeItem = computed(() => tabs.find(tab => tab.value === activeTab.value
             <div>
               <div class="flex flex-wrap items-center gap-2">
                 <UBadge color="neutral" variant="soft">
-                  Local development
+                  {{ overview?.environment || 'Local' }}
                 </UBadge>
                 <UBadge color="success" variant="soft">
                   Safe metadata only
@@ -76,7 +106,7 @@ const activeItem = computed(() => tabs.find(tab => tab.value === activeTab.value
                 {{ activeItem.label }}
               </h2>
               <p class="mt-1 max-w-3xl text-sm text-muted">
-                {{ activeItem.description }}. Secrets, raw rows, and local storage paths stay hidden by default.
+                {{ activeItem.description }}. Secrets, raw rows, and storage paths stay hidden.
               </p>
             </div>
 
@@ -99,7 +129,7 @@ const activeItem = computed(() => tabs.find(tab => tab.value === activeTab.value
                   type="button"
                   class="group flex min-w-0 items-start gap-3 rounded-md px-3 py-3 text-left transition-colors hover:bg-elevated"
                   :class="activeTab === tab.value ? 'bg-primary/10 text-primary ring-1 ring-primary/20' : 'text-muted'"
-                  @click="activeTab = tab.value"
+                  @click="navigateTab(tab.value)"
                 >
                   <UIcon
                     :name="tab.icon"
@@ -121,16 +151,30 @@ const activeItem = computed(() => tabs.find(tab => tab.value === activeTab.value
               <DevtoolsOverview
                 v-if="activeTab === 'overview'"
                 :overview="overview"
+                @navigate="navigateTab"
+              />
+              <DevtoolsDatasets
+                v-else-if="activeTab === 'datasets'"
+                :initial-dataset-id="initialDatasetId"
+              />
+              <DevtoolsWorkflows
+                v-else-if="activeTab === 'workflows'"
+                :initial-dataset-id="initialDatasetId"
+              />
+              <DevtoolsTools v-else-if="activeTab === 'tools'" />
+              <DevtoolsArtifacts
+                v-else-if="activeTab === 'artifacts'"
+                :initial-artifact-id="initialArtifactId"
+              />
+              <DevtoolsDiagnostics v-else-if="activeTab === 'diagnostics'" />
+              <DevtoolsTrace
+                v-else-if="activeTab === 'trace'"
+                :initial-chat-id="initialChatId"
               />
               <DevtoolsChatAgentContext
                 v-else-if="activeTab === 'chat'"
-                :initial-chat-id="typeof route.query.chatId === 'string' ? route.query.chatId : ''"
+                :initial-chat-id="initialChatId"
               />
-              <DevtoolsTools v-else-if="activeTab === 'tools'" />
-              <DevtoolsWorkflows v-else-if="activeTab === 'workflows'" />
-              <DevtoolsDatasets v-else-if="activeTab === 'datasets'" />
-              <DevtoolsArtifacts v-else-if="activeTab === 'artifacts'" />
-              <DevtoolsDiagnostics v-else-if="activeTab === 'diagnostics'" />
             </main>
           </div>
         </div>

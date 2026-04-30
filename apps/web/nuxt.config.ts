@@ -20,6 +20,7 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   ui: {
+    prose: false,
     content: false,
     experimental: {
       componentDetection: true

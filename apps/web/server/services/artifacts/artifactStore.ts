@@ -1,5 +1,5 @@
 import type { Artifact } from '@datagate/shared'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { dataRoot } from '../datasets/storage'
 
@@ -33,6 +33,22 @@ export async function storeReportArtifact(input: StoreReportArtifactInput): Prom
   await writeFile(artifactPath(storageDir, artifact.id), `${JSON.stringify(artifact, null, 2)}\n`)
 
   return artifact
+}
+
+export async function listArtifacts(storageDir = artifactsDir): Promise<Artifact[]> {
+  await mkdir(storageDir, { recursive: true })
+
+  const entries = await readdir(storageDir, { withFileTypes: true })
+  const artifacts = await Promise.all(
+    entries
+      .filter(entry => entry.isFile() && entry.name.endsWith('.json'))
+      .map(async (entry) => {
+        const content = await readFile(join(storageDir, entry.name), 'utf8')
+        return JSON.parse(content) as Artifact
+      })
+  )
+
+  return artifacts.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
 }
 
 export async function getArtifact(id: string, storageDir = artifactsDir): Promise<Artifact> {

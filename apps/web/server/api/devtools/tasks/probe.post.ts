@@ -6,12 +6,26 @@ export default defineEventHandler(async (event) => {
   assertDataGateDevtoolsEnabled()
 
   const body = await readValidatedBody(event, z.object({
-    datasetId: z.string().uuid()
+    datasetId: z.string().uuid(),
+    taskName: z.string().optional()
   }).parse)
+
+  const tasks = body.taskName
+    ? devtoolsExpectedNitroTasks.filter(task => task.name === body.taskName)
+    : devtoolsExpectedNitroTasks
+
+  if (body.taskName && tasks.length === 0) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: `Unknown task: ${body.taskName}`
+    })
+  }
 
   const results = []
 
-  for (const task of devtoolsExpectedNitroTasks) {
+  for (const task of tasks) {
+    const startedAt = Date.now()
+
     try {
       const taskResult = await runTask(task.name, {
         payload: {
@@ -23,6 +37,7 @@ export default defineEventHandler(async (event) => {
         taskName: task.name,
         sourceFile: task.sourceFile,
         ok: true,
+        durationMs: Date.now() - startedAt,
         resultShape: createTaskResultShape(taskResult)
       })
     } catch (error) {
@@ -30,6 +45,7 @@ export default defineEventHandler(async (event) => {
         taskName: task.name,
         sourceFile: task.sourceFile,
         ok: false,
+        durationMs: Date.now() - startedAt,
         error: createProbeError(error)
       })
     }
