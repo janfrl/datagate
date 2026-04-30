@@ -98,6 +98,10 @@ defineShortcuts({
             kbds: ['meta', 'o'],
             icon: 'i-lucide-circle-plus'
           }, {
+            label: 'Datasets',
+            to: '/datasets',
+            icon: 'i-lucide-table'
+          }, {
             label: 'Search',
             icon: 'i-lucide-search',
             kbds: ['meta', 'k'],
@@ -177,6 +181,10 @@ defineShortcuts({
           to: '/',
           icon: 'i-lucide-circle-plus',
           kbds: ['meta', 'o']
+        }, {
+          label: 'Datasets',
+          to: '/datasets',
+          icon: 'i-lucide-table'
         }]
       }, ...groups]"
     />
