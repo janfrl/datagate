@@ -1,18 +1,28 @@
 <script setup lang="ts">
-const { model, models } = useModels()
+const { availableProviders, model, modelIcon, models, provider, providerIcon } = useModels()
 </script>
 
 <template>
-  <USelectMenu
-    v-model="model"
-    :items="models"
-    size="sm"
-    :icon="models.find(m => m.value === model)?.icon"
-    variant="ghost"
-    value-key="value"
-    class="data-[state=open]:bg-elevated"
-    :ui="{
-      trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200'
-    }"
-  />
+  <div class="flex items-center gap-1">
+    <USelectMenu
+      v-model="provider"
+      :items="availableProviders"
+      :disabled="availableProviders.length <= 1"
+      :icon="providerIcon"
+      size="sm"
+      variant="ghost"
+      value-key="value"
+      class="w-36 data-[state=open]:bg-elevated"
+    />
+
+    <USelectMenu
+      v-model="model"
+      :items="models"
+      :icon="modelIcon"
+      size="sm"
+      variant="ghost"
+      value-key="value"
+      class="w-56 data-[state=open]:bg-elevated"
+    />
+  </div>
 </template>

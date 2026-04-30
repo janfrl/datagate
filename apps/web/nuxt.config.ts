@@ -29,6 +29,19 @@ export default defineNuxtConfig({
 
   compatibilityDate: '2024-07-11',
 
+  runtimeConfig: {
+    aiProvider: process.env.AI_PROVIDER || '',
+    aiModel: process.env.AI_MODEL || '',
+    googleGenerativeAiApiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || '',
+    aiGatewayApiKey: process.env.AI_GATEWAY_API_KEY || '',
+    public: {
+      aiProvider: process.env.AI_PROVIDER || '',
+      aiModel: process.env.AI_MODEL || '',
+      hasGoogleAiProvider: !!process.env.GOOGLE_GENERATIVE_AI_API_KEY,
+      hasGatewayAiProvider: !!process.env.AI_GATEWAY_API_KEY
+    }
+  },
+
   nitro: {
     experimental: {
       openAPI: true

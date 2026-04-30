@@ -1,30 +1,38 @@
 <script setup lang="ts">
 const input = ref('')
 const loading = ref(false)
-const chatId = crypto.randomUUID()
 
 const { csrf, headerName } = useCsrf()
 
 async function createChat(prompt: string) {
-  input.value = prompt
+  const text = prompt.trim()
+  if (!text || loading.value) return
+
+  input.value = text
   loading.value = true
+  const chatId = crypto.randomUUID()
 
-  const parts: Array<{ type: string, text?: string, mediaType?: string, url?: string }> = [{ type: 'text', text: prompt }]
+  const parts: Array<{ type: string, text?: string, mediaType?: string, url?: string }> = [{ type: 'text', text }]
 
-  const chat = await $fetch('/api/chats', {
-    method: 'POST',
-    headers: { [headerName]: csrf },
-    body: {
-      id: chatId,
-      message: {
-        role: 'user',
-        parts
+  try {
+    const chat = await $fetch('/api/chats', {
+      method: 'POST',
+      headers: { [headerName]: csrf },
+      body: {
+        id: chatId,
+        message: {
+          id: crypto.randomUUID(),
+          role: 'user',
+          parts
+        }
       }
-    }
-  })
+    })
 
-  refreshNuxtData('chats')
-  navigateTo(`/chat/${chat?.id}`)
+    await navigateTo(`/chat/${chat.id}`)
+    await refreshNuxtData('chats')
+  } finally {
+    loading.value = false
+  }
 }
 
 async function onSubmit() {

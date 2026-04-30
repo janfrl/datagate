@@ -5,7 +5,7 @@ import type { UIMessage } from 'ai'
 
 const route = useRoute()
 const toast = useToast()
-const { model } = useModels()
+const { model, provider } = useModels()
 const { csrf, headerName } = useCsrf()
 
 const { data } = await useFetch(`/api/chats/${route.params.id}`, {
@@ -34,6 +34,7 @@ const chat = new Chat({
     api: `/api/chats/${data.value?.id}`,
     headers: { [headerName]: csrf },
     body: {
+      provider: provider.value,
       model: model.value
     }
   }),

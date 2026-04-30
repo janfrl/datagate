@@ -73,7 +73,26 @@ Create local environment configuration:
 cp apps/web/.env.example apps/web/.env
 ```
 
-Set `NUXT_SESSION_PASSWORD` to a random value of at least 32 characters. Configure the AI provider key used by your selected model. GitHub OAuth values are only required when using GitHub login locally.
+Set `NUXT_SESSION_PASSWORD` to a random value of at least 32 characters. GitHub OAuth values are only required when using GitHub login locally.
+
+AI chat is optional. Dataset upload, deterministic workflows, and report pages work without an AI provider key. To test chat locally with Gemini, configure:
+
+```env
+AI_PROVIDER=google
+GOOGLE_GENERATIVE_AI_API_KEY=your-google-key
+AI_MODEL=gemini-2.5-flash-lite
+```
+
+Good Gemini text model choices for local testing are `gemini-2.5-flash-lite`, `gemini-2.5-flash`, `gemini-3-flash-preview`, and `gemini-2.0-flash-lite`.
+
+To use Vercel AI Gateway as another selectable provider, also configure:
+
+```env
+AI_GATEWAY_API_KEY=your-gateway-key
+AI_MODEL=google/gemini-2.5-flash-lite
+```
+
+When both keys are present, chat shows separate provider and model selectors. `AI_PROVIDER` and `AI_MODEL` only set the initial defaults.
 
 Start the app:
 

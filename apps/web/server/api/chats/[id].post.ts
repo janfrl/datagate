@@ -6,6 +6,7 @@ import { z } from 'zod'
 import type { AnthropicLanguageModelOptions } from '@ai-sdk/anthropic'
 import type { GoogleLanguageModelOptions } from '@ai-sdk/google'
 import type { OpenAILanguageModelResponsesOptions } from '@ai-sdk/openai'
+import { getChatModelConfig } from '../../services/ai/chatProvider'
 import { dataGateTools } from '../../utils/dataGateTools'
 
 defineRouteMeta({
@@ -22,10 +23,9 @@ export default defineEventHandler(async (event) => {
     id: z.string()
   }).parse)
 
-  const { model, messages } = await readValidatedBody(event, z.object({
-    model: z.string().refine(value => MODELS.some(m => m.value === value), {
-      message: 'Invalid model'
-    }),
+  const { model, messages, provider } = await readValidatedBody(event, z.object({
+    provider: z.string().optional(),
+    model: z.string().optional(),
     messages: z.array(z.custom<UIMessage>())
   }).parse)
 
@@ -41,10 +41,11 @@ export default defineEventHandler(async (event) => {
   if (!chat) {
     throw createError({ statusCode: 404, statusMessage: 'Chat not found' })
   }
+  const chatModel = getChatModelConfig({ provider, model })
 
   if (!chat.title) {
     const { text: title } = await generateText({
-      model,
+      model: chatModel.model,
       system: `You are a title generator for a chat:
           - Generate a short title based on the first user's message
           - The title should be less than 30 characters long
@@ -74,7 +75,7 @@ export default defineEventHandler(async (event) => {
     execute: async ({ writer }) => {
       const result = streamText({
         abortSignal: abortController.signal,
-        model,
+        model: chatModel.model,
         system: `You are a knowledgeable and helpful AI assistant for Data Gate, a local-first data quality checker. ${session.user?.username ? `The user's name is ${session.user.username}.` : ''} Your goal is to provide clear, accurate, and well-structured responses.
 
 **DATA GATE WORKFLOW RULES:**
@@ -114,12 +115,16 @@ export default defineEventHandler(async (event) => {
               budgetTokens: 2048
             }
           } satisfies AnthropicLanguageModelOptions,
-          google: {
-            thinkingConfig: {
-              includeThoughts: true,
-              thinkingLevel: 'low'
-            }
-          } satisfies GoogleLanguageModelOptions,
+          ...(usesGoogleThinkingLevel(chatModel.provider, chatModel.modelId)
+            ? {
+                google: {
+                  thinkingConfig: {
+                    includeThoughts: true,
+                    thinkingLevel: 'low'
+                  }
+                } satisfies GoogleLanguageModelOptions
+              }
+            : {}),
           openai: {
             reasoningEffort: 'low',
             reasoningSummary: 'detailed'
@@ -156,3 +161,7 @@ export default defineEventHandler(async (event) => {
     stream
   })
 })
+
+function usesGoogleThinkingLevel(provider: string, model: string) {
+  return provider === 'google' && model.startsWith('gemini-3-')
+}
