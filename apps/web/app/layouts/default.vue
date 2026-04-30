@@ -6,6 +6,7 @@ const { renameChat, deleteChat } = useChatActions()
 
 const sidebarOpen = ref(false)
 const searchOpen = ref(false)
+const showDevtools = import.meta.dev
 
 const { data: chats, refresh: refreshChats } = await useFetch('/api/chats', {
   key: 'chats',
@@ -101,7 +102,11 @@ defineShortcuts({
             label: 'Datasets',
             to: '/datasets',
             icon: 'i-lucide-table'
-          }, {
+          }, ...(showDevtools ? [{
+            label: 'DevTools',
+            to: '/devtools',
+            icon: 'i-lucide-activity'
+          }] : []), {
             label: 'Search',
             icon: 'i-lucide-search',
             kbds: ['meta', 'k'],
