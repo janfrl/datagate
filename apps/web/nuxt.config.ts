@@ -16,7 +16,6 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
 
   ui: {
-    prose: false,
     content: false,
     experimental: {
       componentDetection: true
@@ -27,7 +26,7 @@ export default defineNuxtConfig({
     viewTransition: true
   },
 
-  compatibilityDate: '2024-07-11',
+  compatibilityDate: 'latest',
 
   runtimeConfig: {
     aiProvider: process.env.AI_PROVIDER || '',
