@@ -8,6 +8,7 @@ const {
   pending,
   refresh
 } = await useFetch<PublicDataset[]>('/api/datasets', {
+  key: 'datasets',
   default: () => []
 })
 

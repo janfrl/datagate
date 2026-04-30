@@ -7,10 +7,7 @@ const emit = defineEmits<{
 
 const fileInput = ref<HTMLInputElement>()
 const selectedFile = ref<File>()
-const uploading = ref(false)
-const error = ref<string>()
-
-const { csrf, headerName } = useCsrf()
+const { uploading, error, uploadDatasetFile } = useDatasetUpload()
 const toast = useToast()
 
 const canUpload = computed(() => Boolean(selectedFile.value) && !uploading.value)
@@ -36,23 +33,8 @@ function onFileChange(event: Event) {
 }
 
 async function uploadDataset() {
-  if (!selectedFile.value) {
-    error.value = 'Choose a CSV file before uploading.'
-    return
-  }
-
-  uploading.value = true
-  error.value = undefined
-
   try {
-    const formData = new FormData()
-    formData.append('file', selectedFile.value)
-
-    const dataset = await $fetch<PublicDataset>('/api/datasets/upload', {
-      method: 'POST',
-      headers: { [headerName]: csrf },
-      body: formData
-    })
+    const dataset = await uploadDatasetFile(selectedFile.value)
 
     selectedFile.value = undefined
     if (fileInput.value) {
@@ -66,10 +48,8 @@ async function uploadDataset() {
       icon: 'i-lucide-check'
     })
     emit('uploaded', dataset)
-  } catch (uploadError) {
-    error.value = uploadError instanceof Error ? uploadError.message : 'Upload failed.'
-  } finally {
-    uploading.value = false
+  } catch {
+    // The shared dataset upload composable owns the user-facing error message.
   }
 }
 </script>

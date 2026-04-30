@@ -11,4 +11,4 @@ The web app owns:
 - Report artifact generation and preview
 - Chat UI and high-level Data Gate AI SDK tools
 
-Chat attachments are disabled for the MVP. CSV datasets should be uploaded through the Datasets page so raw data stays local to the server.
+Generic chat attachments are disabled for the MVP. CSV files can be uploaded as Data Gate datasets from the Datasets page or the chat composer, and raw dataset rows stay local to the server.

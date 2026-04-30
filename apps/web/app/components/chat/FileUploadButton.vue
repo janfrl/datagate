@@ -1,9 +1,12 @@
 <script setup lang="ts">
-const { loggedIn } = useUserSession()
-
-defineProps<{
+withDefaults(defineProps<{
   open: () => void
-}>()
+  disabled?: boolean
+  loading?: boolean
+}>(), {
+  disabled: false,
+  loading: false
+})
 </script>
 
 <template>
@@ -11,15 +14,16 @@ defineProps<{
     :content="{
       side: 'top'
     }"
-    :text="!loggedIn ? 'You need to be logged in to upload files' : ''"
+    text="Upload CSV dataset"
   >
     <UButton
       icon="i-lucide-paperclip"
       variant="ghost"
       color="neutral"
       size="sm"
-      :disabled="!loggedIn"
-      aria-label="Attach file"
+      :disabled="disabled"
+      :loading="loading"
+      aria-label="Upload CSV dataset"
       @click="open()"
     />
   </UTooltip>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Chat } from '@ai-sdk/vue'
+import type { PublicDataset } from '@datagate/shared'
 import { DefaultChatTransport } from 'ai'
 import type { UIMessage } from 'ai'
 
@@ -26,6 +27,9 @@ const { data: votes } = await useLazyFetch(`/api/chats/${route.params.id}/votes`
 })
 
 const input = ref('')
+const datasetFileInput = ref<HTMLInputElement>()
+const latestUploadedDataset = ref<PublicDataset>()
+const { uploading: datasetUploading, error: datasetUploadError, uploadDatasetFile } = useDatasetUpload()
 
 const chat = new Chat({
   id: data.value?.id,
@@ -74,6 +78,40 @@ async function handleSubmit(e: Event) {
       text: input.value
     })
     input.value = ''
+  }
+}
+
+function openDatasetFilePicker() {
+  if (!datasetUploading.value && chat.status !== 'streaming') {
+    datasetFileInput.value?.click()
+  }
+}
+
+async function onDatasetFileChange(event: Event) {
+  const fileInput = event.target as HTMLInputElement
+  const file = fileInput.files?.[0]
+
+  if (!file) return
+
+  try {
+    latestUploadedDataset.value = undefined
+    const dataset = await uploadDatasetFile(file)
+    latestUploadedDataset.value = dataset
+    toast.add({
+      title: 'Dataset uploaded',
+      description: dataset.filename,
+      color: 'success',
+      icon: 'i-lucide-check'
+    })
+  } catch {
+    toast.add({
+      title: 'Dataset upload failed',
+      description: datasetUploadError.value,
+      color: 'error',
+      icon: 'i-lucide-alert-circle'
+    })
+  } finally {
+    fileInput.value = ''
   }
 }
 
@@ -235,6 +273,25 @@ onMounted(() => {
             </template>
           </UChatMessages>
 
+          <UAlert
+            v-if="latestUploadedDataset"
+            color="success"
+            variant="soft"
+            icon="i-lucide-check"
+            class="sticky bottom-20 z-10"
+            :title="`Dataset uploaded: ${latestUploadedDataset.filename}`"
+            description="Ask the chat to analyze it when you are ready."
+          />
+
+          <UAlert
+            v-else-if="datasetUploadError"
+            color="error"
+            variant="soft"
+            icon="i-lucide-circle-alert"
+            class="sticky bottom-20 z-10"
+            :description="datasetUploadError"
+          />
+
           <UChatPrompt
             v-if="isOwner"
             v-model="input"
@@ -246,6 +303,18 @@ onMounted(() => {
           >
             <template #footer>
               <div class="flex items-center gap-1">
+                <input
+                  ref="datasetFileInput"
+                  type="file"
+                  accept=".csv,text/csv"
+                  class="hidden"
+                  @change="onDatasetFileChange"
+                >
+                <ChatFileUploadButton
+                  :open="openDatasetFilePicker"
+                  :loading="datasetUploading"
+                  :disabled="chat.status === 'streaming'"
+                />
                 <ModelSelect />
               </div>
 

@@ -1,8 +1,14 @@
 <script setup lang="ts">
+import type { PublicDataset } from '@datagate/shared'
+
 const input = ref('')
 const loading = ref(false)
+const datasetFileInput = ref<HTMLInputElement>()
+const latestUploadedDataset = ref<PublicDataset>()
 
 const { csrf, headerName } = useCsrf()
+const { uploading: datasetUploading, error: datasetUploadError, uploadDatasetFile } = useDatasetUpload()
+const toast = useToast()
 
 async function createChat(prompt: string) {
   const text = prompt.trim()
@@ -37,6 +43,40 @@ async function createChat(prompt: string) {
 
 async function onSubmit() {
   await createChat(input.value)
+}
+
+function openDatasetFilePicker() {
+  if (!datasetUploading.value) {
+    datasetFileInput.value?.click()
+  }
+}
+
+async function onDatasetFileChange(event: Event) {
+  const fileInput = event.target as HTMLInputElement
+  const file = fileInput.files?.[0]
+
+  if (!file) return
+
+  try {
+    latestUploadedDataset.value = undefined
+    const dataset = await uploadDatasetFile(file)
+    latestUploadedDataset.value = dataset
+    toast.add({
+      title: 'Dataset uploaded',
+      description: dataset.filename,
+      color: 'success',
+      icon: 'i-lucide-check'
+    })
+  } catch {
+    toast.add({
+      title: 'Dataset upload failed',
+      description: datasetUploadError.value,
+      color: 'error',
+      icon: 'i-lucide-alert-circle'
+    })
+  } finally {
+    fileInput.value = ''
+  }
 }
 
 const quickChats = [
@@ -88,14 +128,41 @@ const quickChats = [
           </p>
 
           <div>
+            <input
+              ref="datasetFileInput"
+              type="file"
+              accept=".csv,text/csv"
+              class="hidden"
+              @change="onDatasetFileChange"
+            >
+
             <UButton
-              to="/datasets"
+              type="button"
               icon="i-lucide-upload"
               label="Upload dataset"
               color="neutral"
               variant="outline"
+              :loading="datasetUploading"
+              @click="openDatasetFilePicker"
             />
           </div>
+
+          <UAlert
+            v-if="latestUploadedDataset"
+            color="success"
+            variant="soft"
+            icon="i-lucide-check"
+            :title="`Dataset uploaded: ${latestUploadedDataset.filename}`"
+            description="Ask the chat to analyze it, or use the Analyze my latest dataset suggestion."
+          />
+
+          <UAlert
+            v-else-if="datasetUploadError"
+            color="error"
+            variant="soft"
+            icon="i-lucide-circle-alert"
+            :description="datasetUploadError"
+          />
 
           <UChatPrompt
             v-model="input"
@@ -107,6 +174,11 @@ const quickChats = [
           >
             <template #footer>
               <div class="flex items-center gap-1">
+                <ChatFileUploadButton
+                  :open="openDatasetFilePicker"
+                  :loading="datasetUploading"
+                  :disabled="loading"
+                />
                 <ModelSelect />
               </div>
 
