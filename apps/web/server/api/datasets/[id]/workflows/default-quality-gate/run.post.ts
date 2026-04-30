@@ -1,3 +1,4 @@
+import { toSafeWorkflowRunSummary } from '../../../../../services/workflows/workflowResponses'
 import { runDefaultQualityGateWorkflow } from '../../../../../services/workflows/runDefaultQualityGate'
 
 export default defineEventHandler(async (event) => {
@@ -10,5 +11,5 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  return runDefaultQualityGateWorkflow(id)
+  return toSafeWorkflowRunSummary(await runDefaultQualityGateWorkflow(id))
 })

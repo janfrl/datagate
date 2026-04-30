@@ -6,7 +6,6 @@ export default defineNuxtConfig({
     '@comark/nuxt',
     '@nuxthub/core',
     'nuxt-auth-utils',
-    'nuxt-charts',
     'nuxt-csurf'
   ],
 
@@ -15,6 +14,15 @@ export default defineNuxtConfig({
   },
 
   css: ['~/assets/css/main.css'],
+
+  ui: {
+    fonts: false,
+    prose: false,
+    content: false,
+    experimental: {
+      componentDetection: true
+    }
+  },
 
   experimental: {
     viewTransition: true
@@ -29,8 +37,7 @@ export default defineNuxtConfig({
   },
 
   hub: {
-    db: 'sqlite',
-    blob: true
+    db: 'sqlite'
   },
 
   vite: {

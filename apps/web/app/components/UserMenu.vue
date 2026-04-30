@@ -91,16 +91,6 @@ const items = computed<DropdownMenuItem[][]>(() => ([[{
     }
   }]
 }], [{
-  label: 'Documentation',
-  icon: 'i-lucide-book-open',
-  to: 'https://ui.nuxt.com/docs/getting-started/installation/nuxt',
-  target: '_blank'
-}, {
-  label: 'Template source',
-  icon: 'i-simple-icons-github',
-  to: 'https://github.com/nuxt-ui-templates/chat',
-  target: '_blank'
-}], [{
   label: 'Log out',
   icon: 'i-lucide-log-out',
   onSelect() {

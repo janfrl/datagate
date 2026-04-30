@@ -3,17 +3,6 @@ const input = ref('')
 const loading = ref(false)
 const chatId = crypto.randomUUID()
 
-const {
-  dropzoneRef,
-  dragging,
-  open,
-  files,
-  uploading,
-  uploadedFiles,
-  removeFile,
-  clearFiles
-} = useFileUploadWithStatus(chatId)
-
 const { csrf, headerName } = useCsrf()
 
 async function createChat(prompt: string) {
@@ -21,10 +10,6 @@ async function createChat(prompt: string) {
   loading.value = true
 
   const parts: Array<{ type: string, text?: string, mediaType?: string, url?: string }> = [{ type: 'text', text: prompt }]
-
-  if (uploadedFiles.value.length > 0) {
-    parts.push(...uploadedFiles.value)
-  }
 
   const chat = await $fetch('/api/chats', {
     method: 'POST',
@@ -44,7 +29,6 @@ async function createChat(prompt: string) {
 
 async function onSubmit() {
   await createChat(input.value)
-  clearFiles()
 }
 
 const quickChats = [
@@ -59,6 +43,10 @@ const quickChats = [
   {
     label: 'What makes a dataset ready for model evaluation?',
     icon: 'i-lucide-clipboard-check'
+  },
+  {
+    label: 'Analyze my latest dataset',
+    icon: 'i-lucide-shield-check'
   },
   {
     label: 'List common privacy risks in tabular data',
@@ -82,9 +70,7 @@ const quickChats = [
     </template>
 
     <template #body>
-      <div ref="dropzoneRef" class="flex flex-1">
-        <DragDropOverlay :show="dragging" />
-
+      <div class="flex flex-1">
         <UContainer class="flex-1 flex flex-col justify-center gap-4 sm:gap-6 py-8">
           <h1 class="text-3xl sm:text-4xl text-highlighted font-bold">
             Data Gate
@@ -93,27 +79,30 @@ const quickChats = [
             Local-first AI data quality checker
           </p>
 
+          <div>
+            <UButton
+              to="/datasets"
+              icon="i-lucide-upload"
+              label="Upload dataset"
+              color="neutral"
+              variant="outline"
+            />
+          </div>
+
           <UChatPrompt
             v-model="input"
             :status="loading ? 'streaming' : 'ready'"
-            :disabled="uploading"
             class="[view-transition-name:chat-prompt]"
             variant="subtle"
             :ui="{ base: 'px-1.5' }"
             @submit="onSubmit"
           >
-            <template v-if="files.length > 0" #header>
-              <ChatFiles :files="files" @remove="removeFile" />
-            </template>
-
             <template #footer>
               <div class="flex items-center gap-1">
-                <ChatFileUploadButton :open="open" />
-
                 <ModelSelect />
               </div>
 
-              <UChatPromptSubmit color="neutral" size="sm" :disabled="uploading" />
+              <UChatPromptSubmit color="neutral" size="sm" />
             </template>
           </UChatPrompt>
 

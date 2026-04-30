@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import type { Dataset, WorkflowRunResult } from '@datagate/shared'
+import type { PublicDataset, SafeWorkflowRunSummary } from '@datagate/shared'
 
 const props = defineProps<{
-  datasets: Dataset[]
+  datasets: PublicDataset[]
   pending?: boolean
 }>()
 
 const emit = defineEmits<{
-  workflowRun: [result: WorkflowRunResult]
+  workflowRun: [result: SafeWorkflowRunSummary]
 }>()
 
 const { csrf, headerName } = useCsrf()
@@ -18,12 +18,12 @@ const runError = ref<string>()
 
 const hasDatasets = computed(() => props.datasets.length > 0)
 
-async function runDefaultQualityGate(dataset: Dataset) {
+async function runDefaultQualityGate(dataset: PublicDataset) {
   runningDatasetId.value = dataset.id
   runError.value = undefined
 
   try {
-    const result = await $fetch<WorkflowRunResult>(`/api/datasets/${dataset.id}/workflows/default-quality-gate/run`, {
+    const result = await $fetch<SafeWorkflowRunSummary>(`/api/datasets/${dataset.id}/workflows/default-quality-gate/run`, {
       method: 'POST',
       headers: { [headerName]: csrf }
     })

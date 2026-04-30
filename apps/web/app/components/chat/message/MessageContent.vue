@@ -29,23 +29,13 @@ const emit = defineEmits<{
     </UChatReasoning>
 
     <template v-else-if="isToolUIPart(part)">
-      <ChatToolChart
-        v-if="getToolName(part) === 'chart'"
-        :invocation="{ ...(part as ChartUIToolInvocation) }"
-      />
-      <ChatToolWeather
-        v-else-if="getToolName(part) === 'weather'"
-        :invocation="{ ...(part as WeatherUIToolInvocation) }"
-      />
       <UChatTool
-        v-else-if="getToolName(part) === 'web_search' || getToolName(part) === 'google_search'"
-        :text="isToolStreaming(part) ? 'Searching the web...' : 'Searched the web'"
-        :suffix="getSearchQuery(part)"
+        v-if="['listDatasets', 'runDefaultQualityGate', 'getArtifact'].includes(getToolName(part) || '')"
+        :text="isToolStreaming(part) ? 'Running Data Gate tool...' : 'Data Gate tool completed'"
+        :suffix="getToolName(part)"
         :streaming="isToolStreaming(part)"
         chevron="leading"
-      >
-        <ChatToolSources :sources="getSources(part)" />
-      </UChatTool>
+      />
     </template>
 
     <template v-else-if="isTextUIPart(part)">

@@ -21,17 +21,6 @@ watch(() => data.value?.title, (next) => {
   title.value = next ?? null
 })
 
-const {
-  dropzoneRef,
-  dragging,
-  open,
-  files,
-  uploading,
-  uploadedFiles,
-  removeFile,
-  clearFiles
-} = useFileUploadWithStatus(route.params.id as string)
-
 const { data: votes } = await useLazyFetch(`/api/chats/${route.params.id}/votes`, {
   immediate: isOwner.value
 })
@@ -79,13 +68,11 @@ const chat = new Chat({
 
 async function handleSubmit(e: Event) {
   e.preventDefault()
-  if (input.value.trim() && !uploading.value) {
+  if (input.value.trim()) {
     chat.sendMessage({
-      text: input.value,
-      files: uploadedFiles.value.length > 0 ? uploadedFiles.value : undefined
+      text: input.value
     })
     input.value = ''
-    clearFiles()
   }
 }
 
@@ -197,15 +184,13 @@ onMounted(() => {
     </template>
 
     <template #body>
-      <div ref="dropzoneRef" class="flex flex-1">
-        <DragDropOverlay v-if="isOwner" :show="dragging" />
-
+      <div class="flex flex-1">
         <UContainer class="flex-1 flex flex-col gap-4 sm:gap-6">
           <UChatMessages
             should-auto-scroll
             :messages="chat.messages"
             :status="chat.status"
-            :spacing-offset="isOwner ? 160 : 0"
+            :spacing-offset="isOwner ? 120 : 0"
             class="pt-(--ui-header-height) pb-4 sm:pb-6"
           >
             <template #indicator>
@@ -253,26 +238,18 @@ onMounted(() => {
             v-if="isOwner"
             v-model="input"
             :error="chat.error"
-            :disabled="uploading"
             variant="subtle"
             class="sticky bottom-0 [view-transition-name:chat-prompt] rounded-b-none z-10"
             :ui="{ base: 'px-1.5' }"
             @submit="handleSubmit"
           >
-            <template v-if="files.length > 0" #header>
-              <ChatFiles :files="files" @remove="removeFile" />
-            </template>
-
             <template #footer>
               <div class="flex items-center gap-1">
-                <ChatFileUploadButton :open="open" />
-
                 <ModelSelect />
               </div>
 
               <UChatPromptSubmit
                 :status="chat.status"
-                :disabled="uploading"
                 color="neutral"
                 size="sm"
                 @stop="chat.stop()"

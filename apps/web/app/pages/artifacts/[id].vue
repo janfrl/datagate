@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Artifact } from '@datagate/shared'
+import type { SafeArtifactContent } from '@datagate/shared'
 
 const route = useRoute()
 const artifactId = computed(() => String(route.params.id))
@@ -8,7 +8,7 @@ const {
   data: artifact,
   pending,
   error
-} = await useFetch<Artifact>(() => `/api/artifacts/${artifactId.value}`)
+} = await useFetch<SafeArtifactContent>(() => `/api/artifacts/${artifactId.value}`)
 </script>
 
 <template>

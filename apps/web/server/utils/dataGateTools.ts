@@ -1,13 +1,11 @@
 import { tool } from 'ai'
 import { z } from 'zod'
 import { getArtifact as getStoredArtifact } from '../services/artifacts/artifactStore'
-import {
-  toSafeDatasetMetadata,
-  toSafeReportArtifactContent,
-  toSafeWorkflowRunSummary
-} from '../services/chat/dataGateToolResults'
+import { toSafeReportArtifactContent } from '../services/artifacts/artifactResponses'
+import { toPublicDataset } from '../services/datasets/datasetResponses'
 import { listDatasets as listStoredDatasets } from '../services/datasets/storage'
 import { runDefaultQualityGateWorkflow } from '../services/workflows/runDefaultQualityGate'
+import { toSafeWorkflowRunSummary } from '../services/workflows/workflowResponses'
 
 export const dataGateTools = {
   listDatasets: tool({
@@ -17,7 +15,7 @@ export const dataGateTools = {
       const datasets = await listStoredDatasets()
 
       return {
-        datasets: datasets.map(toSafeDatasetMetadata)
+        datasets: datasets.map(toPublicDataset)
       }
     }
   }),

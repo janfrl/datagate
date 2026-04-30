@@ -1,24 +1,24 @@
 <script setup lang="ts">
-import type { Dataset, WorkflowRunResult } from '@datagate/shared'
+import type { PublicDataset, SafeWorkflowRunSummary } from '@datagate/shared'
 
-const latestResult = ref<WorkflowRunResult>()
+const latestResult = ref<SafeWorkflowRunSummary>()
 
 const {
   data: datasets,
   pending,
   refresh
-} = await useFetch<Dataset[]>('/api/datasets', {
+} = await useFetch<PublicDataset[]>('/api/datasets', {
   default: () => []
 })
 
-const latestReportId = computed(() => latestResult.value?.artifacts?.report)
-const latestSummary = computed(() => latestResult.value?.summary)
+const latestReportId = computed(() => latestResult.value?.reportArtifactId)
+const latestSummary = computed(() => latestResult.value?.severityCounts)
 
 async function onUploaded() {
   await refresh()
 }
 
-function onWorkflowRun(result: WorkflowRunResult) {
+function onWorkflowRun(result: SafeWorkflowRunSummary) {
   latestResult.value = result
 }
 </script>
@@ -90,7 +90,13 @@ function onWorkflowRun(result: WorkflowRunResult) {
                 Total findings
               </p>
               <p class="mt-1 text-2xl font-semibold text-highlighted">
-                {{ latestSummary?.totalFindings ?? 0 }}
+                {{
+                  (latestSummary?.critical ?? 0)
+                    + (latestSummary?.high ?? 0)
+                    + (latestSummary?.medium ?? 0)
+                    + (latestSummary?.low ?? 0)
+                    + (latestSummary?.info ?? 0)
+                }}
               </p>
             </div>
 
@@ -99,7 +105,7 @@ function onWorkflowRun(result: WorkflowRunResult) {
                 Critical
               </p>
               <p class="mt-1 text-2xl font-semibold text-highlighted">
-                {{ latestSummary?.criticalFindings ?? 0 }}
+                {{ latestSummary?.critical ?? 0 }}
               </p>
             </div>
 
@@ -108,7 +114,7 @@ function onWorkflowRun(result: WorkflowRunResult) {
                 High
               </p>
               <p class="mt-1 text-2xl font-semibold text-highlighted">
-                {{ latestSummary?.highFindings ?? 0 }}
+                {{ latestSummary?.high ?? 0 }}
               </p>
             </div>
 
@@ -117,7 +123,7 @@ function onWorkflowRun(result: WorkflowRunResult) {
                 Medium
               </p>
               <p class="mt-1 text-2xl font-semibold text-highlighted">
-                {{ latestSummary?.mediumFindings ?? 0 }}
+                {{ latestSummary?.medium ?? 0 }}
               </p>
             </div>
 
@@ -126,7 +132,7 @@ function onWorkflowRun(result: WorkflowRunResult) {
                 Low
               </p>
               <p class="mt-1 text-2xl font-semibold text-highlighted">
-                {{ latestSummary?.lowFindings ?? 0 }}
+                {{ latestSummary?.low ?? 0 }}
               </p>
             </div>
 
@@ -135,7 +141,7 @@ function onWorkflowRun(result: WorkflowRunResult) {
                 Info
               </p>
               <p class="mt-1 text-2xl font-semibold text-highlighted">
-                {{ latestSummary?.infoFindings ?? 0 }}
+                {{ latestSummary?.info ?? 0 }}
               </p>
             </div>
           </div>

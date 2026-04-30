@@ -1,6 +1,7 @@
+import { toSafeReportArtifactContent } from '../../services/artifacts/artifactResponses'
 import { getArtifact } from '../../services/artifacts/artifactStore'
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
 
   if (!id) {
@@ -10,5 +11,5 @@ export default defineEventHandler((event) => {
     })
   }
 
-  return getArtifact(id)
+  return toSafeReportArtifactContent(await getArtifact(id))
 })

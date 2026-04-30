@@ -7,6 +7,8 @@ export type Dataset = {
   storagePath: string
 }
 
+export type PublicDataset = Pick<Dataset, 'id' | 'filename' | 'mimeType' | 'size' | 'uploadedAt'>
+
 export type DatasetProfile = {
   datasetId: string
   rowCount: number
@@ -25,6 +27,12 @@ export type ColumnProfile = {
   missingRatio: number
   uniqueCount: number
   examples: unknown[]
+}
+
+export type PublicColumnProfile = Omit<ColumnProfile, 'examples'>
+
+export type PublicDatasetProfile = Omit<DatasetProfile, 'columns' | 'sampleRows'> & {
+  columns: PublicColumnProfile[]
 }
 
 export type Finding = {
@@ -92,6 +100,25 @@ export type WorkflowRunResult = {
   }
 }
 
+export type SafeFindingSummary = Pick<Finding, 'id' | 'category' | 'severity' | 'column' | 'title' | 'message' | 'recommendation'>
+
+export type SafeWorkflowRunSummary = {
+  workflowRunId: string
+  datasetId: string
+  status: WorkflowRunStatus
+  qualityScore: QualityScore
+  severityCounts: {
+    critical: number
+    high: number
+    medium: number
+    low: number
+    info: number
+  }
+  topFindings: SafeFindingSummary[]
+  recommendations: string[]
+  reportArtifactId?: string
+}
+
 export type Artifact = {
   id: string
   type: 'dataset-profile' | 'findings' | 'report'
@@ -101,4 +128,15 @@ export type Artifact = {
   content: unknown
   createdAt: string
   updatedAt: string
+}
+
+export type SafeArtifactContent = {
+  id: string
+  type: Artifact['type']
+  title: string
+  datasetId?: string
+  createdAt: string
+  updatedAt: string
+  content: string
+  truncated: boolean
 }

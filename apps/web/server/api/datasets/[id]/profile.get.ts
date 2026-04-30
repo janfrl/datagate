@@ -1,6 +1,7 @@
+import { toPublicDatasetProfile } from '../../../services/datasets/datasetResponses'
 import { getDatasetProfile } from '../../../services/datasets/profile'
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
 
   if (!id) {
@@ -10,5 +11,5 @@ export default defineEventHandler((event) => {
     })
   }
 
-  return getDatasetProfile(id)
+  return toPublicDatasetProfile(await getDatasetProfile(id))
 })

@@ -1,12 +1,10 @@
-import type { Artifact, Dataset, WorkflowRunResult } from '@datagate/shared'
+import type { Artifact, Dataset, DatasetProfile, WorkflowRunResult } from '@datagate/shared'
 import { describe, expect, it } from 'vitest'
-import {
-  toSafeDatasetMetadata,
-  toSafeReportArtifactContent,
-  toSafeWorkflowRunSummary
-} from './dataGateToolResults'
+import { toSafeReportArtifactContent } from '../artifacts/artifactResponses'
+import { toPublicDataset, toPublicDatasetProfile } from '../datasets/datasetResponses'
+import { toSafeWorkflowRunSummary } from '../workflows/workflowResponses'
 
-describe('Data Gate chat tool result helpers', () => {
+describe('Data Gate response privacy helpers', () => {
   it('omits local storage paths from dataset metadata', () => {
     const dataset: Dataset = {
       id: '9c793b5f-c84d-49f7-8b1c-7a7deed2c14a',
@@ -17,14 +15,40 @@ describe('Data Gate chat tool result helpers', () => {
       storagePath: 'C:\\private\\uploads\\customers.csv'
     }
 
-    expect(toSafeDatasetMetadata(dataset)).toEqual({
+    expect(toPublicDataset(dataset)).toEqual({
       id: dataset.id,
       filename: dataset.filename,
       mimeType: dataset.mimeType,
       size: dataset.size,
       uploadedAt: dataset.uploadedAt
     })
-    expect(toSafeDatasetMetadata(dataset)).not.toHaveProperty('storagePath')
+    expect(toPublicDataset(dataset)).not.toHaveProperty('storagePath')
+  })
+
+  it('omits sample rows and example values from public dataset profiles', () => {
+    const profile: DatasetProfile = {
+      datasetId: '9c793b5f-c84d-49f7-8b1c-7a7deed2c14a',
+      rowCount: 1,
+      columnCount: 1,
+      sampleRows: [{ email: 'jane@example.com' }],
+      columns: [{
+        name: 'email',
+        originalName: 'email',
+        wasDuplicateName: false,
+        wasGeneratedName: false,
+        inferredType: 'string',
+        missingCount: 0,
+        missingRatio: 0,
+        uniqueCount: 1,
+        examples: ['jane@example.com']
+      }]
+    }
+
+    const publicProfile = toPublicDatasetProfile(profile)
+
+    expect(publicProfile).not.toHaveProperty('sampleRows')
+    expect(publicProfile.columns[0]).not.toHaveProperty('examples')
+    expect(JSON.stringify(publicProfile)).not.toContain('jane@example.com')
   })
 
   it('returns a compact workflow summary without task results or evidence', () => {
@@ -95,6 +119,7 @@ describe('Data Gate chat tool result helpers', () => {
         low: 0,
         info: 0
       },
+      status: 'completed',
       topFindings: [
         {
           id: 'privacy-1',
@@ -105,6 +130,9 @@ describe('Data Gate chat tool result helpers', () => {
           message: 'Column contains [redacted-email] and [redacted-ip].',
           recommendation: 'Redact [redacted-phone] before AI use.'
         }
+      ],
+      recommendations: [
+        'Redact [redacted-phone] before AI use.'
       ],
       reportArtifactId: result.artifacts?.report
     })

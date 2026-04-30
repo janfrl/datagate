@@ -1,0 +1,7 @@
+customer_id,first_name,last_name,email,phone,signup_date,lifetime_value,status
+C-1001,Avery,Chen,avery.chen@example.com,+1 415 555 0101,2025-01-15,120.50,active
+C-1002,Blake,Rivera,blake.rivera@example.com,,2025-01-17,98.00,active
+C-1003,Casey,Patel,casey.patel@example.com,+1 415 555 0103,,105.25,trial
+C-1004,Drew,Nguyen,drew.nguyen@example.com,+1 415 555 0104,2025-01-20,9999.00,active
+C-1005,Emerson,Smith,,+1 415 555 0105,2025-01-21,87.75,inactive
+C-1006,Finley,Garcia,finley.garcia@example.com,+1 415 555 0106,2025-01-22,,active

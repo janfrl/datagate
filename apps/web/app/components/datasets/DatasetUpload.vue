@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { Dataset } from '@datagate/shared'
+import type { PublicDataset } from '@datagate/shared'
 
 const emit = defineEmits<{
-  uploaded: [dataset: Dataset]
+  uploaded: [dataset: PublicDataset]
 }>()
 
 const fileInput = ref<HTMLInputElement>()
@@ -48,7 +48,7 @@ async function uploadDataset() {
     const formData = new FormData()
     formData.append('file', selectedFile.value)
 
-    const dataset = await $fetch<Dataset>('/api/datasets/upload', {
+    const dataset = await $fetch<PublicDataset>('/api/datasets/upload', {
       method: 'POST',
       headers: { [headerName]: csrf },
       body: formData

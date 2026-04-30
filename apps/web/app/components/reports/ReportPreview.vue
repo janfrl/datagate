@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { Artifact } from '@datagate/shared'
+import type { SafeArtifactContent } from '@datagate/shared'
 
 const props = defineProps<{
-  artifact?: Artifact | null
+  artifact?: SafeArtifactContent | null
   pending?: boolean
 }>()
 
