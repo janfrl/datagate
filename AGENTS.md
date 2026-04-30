@@ -164,11 +164,11 @@ Use Conventional Commits.
 
 Examples:
 
-- `feat: add dataset upload endpoint`
-- `fix: handle empty CSV files`
-- `test: add profiling tests`
+- `feat: add upload endpoint`
+- `fix: handle empty input`
+- `test: add validation tests`
 - `docs: update setup instructions`
-- `refactor: extract dataset storage service`
+- `refactor: extract storage service`
 - `chore: configure workspace scripts`
 
 Do not use vague commit messages such as:
@@ -177,6 +177,12 @@ Do not use vague commit messages such as:
 - `fix stuff`
 - `changes`
 - `wip`
+
+Keep commits reasonably sized and logically grouped.
+
+Do not force unrelated changes into a single commit. Split work into multiple commits when it makes the commit type and message clearer.
+
+Each commit should represent one coherent change, so the Conventional Commit type accurately describes the content.
 
 ## Review Behavior
 
